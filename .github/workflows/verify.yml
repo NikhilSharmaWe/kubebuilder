@@ -25,6 +25,7 @@ jobs:
   verify:
     name: Verify PR contents
     runs-on: ubuntu-latest
+    if: needs.check_docs_only.outputs.skip != 'true'
     steps:
       - name: Verifier action
         id: verifier

@@ -10,7 +10,7 @@ project and its various components.
   code is easy to update (just increase your dependency version), easier
   to version using existing mechanisms, and more concise.
 
-* **Copy-pasting is bad**: Copy-pasted code suffers from similar problems
+* **Copy-pasting is bad**: Copy-pasted code suffers from similar problem
   as code generation, except more acutely.  Copy-pasted code is nearly
   impossible to easy update, and frequently suffers from bugs and
   misunderstandings.  If something is being copy-pasted, it should
