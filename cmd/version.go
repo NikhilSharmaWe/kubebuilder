@@ -50,6 +50,6 @@ func versionString() string {
 		gitCommit,
 		buildDate,
 		goos,
-		goarch,
+		goarc,
 	})
 }
