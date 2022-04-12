@@ -15,7 +15,7 @@ It builds on top of the canonical techniques used to build the core Kubernetes A
 **Note:** Kubebuilder does not exist as an example to *copy-paste*, but instead provides powerful libraries and tools
 to simplify building and publishing Kubernetes APIs from scratch.
 
-Kubebuilder is developed on top of the controller-runtime and controller-tools libraries.
+Kubebuilder is developed on top of the controller-runtime and controller-tools libraries
 
 ### Installation
 
