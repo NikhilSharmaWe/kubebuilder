@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
 	golangv2 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2"
-	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
+	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v4"
 )
 
 func main() {
