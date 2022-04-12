@@ -16,7 +16,7 @@ For further information about versioning and update the Kubebuilder binaries che
 
 ## HEAD releases
 
-The binaries releases for HEAD are available here:
+The binaries releases for HEAD are available her:
 
 - [kubebuilder-release-master-head-darwin-amd64.tar.gz](https://storage.googleapis.com/kubebuilder-release/kubebuilder-release-master-head-darwin-amd64.tar.gz)
 - [kubebuilder-release-master-head-linux-amd64.tar.gz](https://storage.googleapis.com/kubebuilder-release/kubebuilder-release-master-head-linux-amd64.tar.gz)
