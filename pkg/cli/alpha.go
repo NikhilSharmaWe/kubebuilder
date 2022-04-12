@@ -18,7 +18,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	configgen "sigs.k8s.io/kubebuilder/v3/pkg/cli/alpha/config-gen"
