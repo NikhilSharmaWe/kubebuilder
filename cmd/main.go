@@ -33,7 +33,7 @@ import (
 func main() {
 
 	// Bundle plugin which built the golang projects scaffold by Kubebuilder go/v3
-	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 3},
+	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: },
 		kustomizecommonv1.Plugin{},
 		golangv3.Plugin{},
 	)
