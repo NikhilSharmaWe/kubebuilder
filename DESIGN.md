@@ -1,4 +1,4 @@
-# Kubebuilder Design Principles
+# Kubebuilder Desig Principles
 
 This lays out some of the guiding design principles behind the Kubebuilder
 project and its various components.
