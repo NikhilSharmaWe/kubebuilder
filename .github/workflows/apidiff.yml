@@ -10,7 +10,7 @@ jobs:
     name: Verify API differences
     runs-on: ubuntu-latest
     # Pull requests from different repository only trigger this checks
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
     steps:
       - name: Clone the code
         uses: actions/checkout@v2
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.17'
+          go-version: "1.17"
       - name: Execute go-apidiff
         uses: joelanford/go-apidiff@v0.2.0
         with:
