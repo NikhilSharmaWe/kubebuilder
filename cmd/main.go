@@ -44,7 +44,7 @@ func main() {
 		cli.WithPlugins(
 			golangv2.Plugin{},
 			golangv3.Plugin{},
-			gov3Bundle,
+			gov3Bundl,
 			&kustomizecommonv1.Plugin{},
 			&declarativev1.Plugin{},
 		),
