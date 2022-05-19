@@ -136,6 +136,28 @@ var _ = Describe("kubebuilder", func() {
 				Run(kbc)
 			})
 		})
+
+		Context("plugin base.go.kubebuilder.io/v4-alpha", func() {
+			// Use cert-manager with v1 CRs.
+			BeforeEach(func() {
+				By("installing the cert-manager bundle")
+				Expect(kbc.InstallCertManager(false)).To(Succeed())
+			})
+			AfterEach(func() {
+				By("uninstalling the cert-manager bundle")
+				kbc.UninstallCertManager(false)
+			})
+
+			It("should generate a runnable project", func() {
+				// Skip if cluster version < 1.16, when v1 CRDs and webhooks did not exist.
+				if srvVer := kbc.K8sVersion.ServerVersion; srvVer.GetMajorInt() <= 1 && srvVer.GetMinorInt() < 17 {
+					Skip(fmt.Sprintf("cluster version %s does not support v1 CRDs or webhooks", srvVer.GitVersion))
+				}
+
+				GenerateV4(kbc, "v1")
+				Run(kbc)
+			})
+		})
 	})
 })
 
