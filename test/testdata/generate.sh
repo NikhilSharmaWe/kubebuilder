@@ -69,6 +69,11 @@ function scaffold_test_project {
       $kb create webhook --group crew --version v1 --kind Admiral --defaulting
     fi
 
+    if [ $project == "project-v3-with-deploy-image" ]; then
+      $kb create api --group example.com --version v1alpha1 --kind Memcache  --controller=true --resource=true --image=memcached:1.6.15-alpine --plugins="go/v3,deploy-image/v1-alpha"
+      $make manifests
+    fi
+
     $kb create api --group crew --version v1 --kind Laker --controller=true --resource=false --make=false
   elif [[ $project =~ multigroup ]]; then
     header_text 'Switching to multigroup layout ...'
@@ -132,3 +137,4 @@ scaffold_test_project project-v3-addon --plugins="go/v3,declarative"
 scaffold_test_project project-v3-config --component-config
 scaffold_test_project project-v3-v1beta1
 scaffold_test_project project-v3-with-kustomize-v2 --plugins="kustomize/v2-alpha,base.go.kubebuilder.io/v3"
+scaffold_test_project project-v3-with-deploy-image
