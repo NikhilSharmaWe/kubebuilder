@@ -81,6 +81,8 @@ import (
 	{{- end }}
 )
 
+var imageName string
+
 // {{ .Resource.Kind }}Reconciler reconciles a {{ .Resource.Kind }} object
 type {{ .Resource.Kind }}Reconciler struct {
 	client.Client
@@ -134,6 +136,10 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 	err = r.Get(ctx, types.NamespacedName{Name: {{ .Resource.Kind }}.Name, Namespace: {{ .Resource.Kind }}.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
+		imageName, err := imageFor{{ .Resource.Kind }}()
+		if err != nil {
+    		log.Error(err, "unable to get env var {{ .Resource.Kind }}IMAGE")
+		}
 		dep := r.deploymentFor{{ .Resource.Kind }}({{ .Resource.Kind }})
 		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.Create(ctx, dep)
@@ -172,7 +178,6 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 func (r *{{ .Resource.Kind }}Reconciler) deploymentFor{{ .Resource.Kind }}(m *{{ .Resource.ImportAlias }}.{{ .Resource.Kind }}) *appsv1.Deployment {
 	ls := labelsFor{{ .Resource.Kind }}(m.Name)
 	replicas := m.Spec.Size
-
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
@@ -198,7 +203,7 @@ func (r *{{ .Resource.Kind }}Reconciler) deploymentFor{{ .Resource.Kind }}(m *{{
 						},
 					},
 					Containers: []corev1.Container{
-						Image: "{{ .Image }}",
+						Image: imageName,
 						Name:    "{{ .Resource.Kind }}",
                         ImagePullPolicy: {{ .Resource.Kind }}.Spec.ContainerImagePullPolicy,
 						Command: []string{"{{ .Resource.Kind }}"},
@@ -233,6 +238,18 @@ func (r *{{ .Resource.Kind }}Reconciler) deploymentFor{{ .Resource.Kind }}(m *{{
 // belonging to the given  {{ .Resource.Kind }} CR name.
 func labelsFor{{ .Resource.Kind }}(name string) map[string]string {
 	return map[string]string{"type": " {{ .Resource.Kind }}", " {{ .Resource.Kind }}_cr": name}
+}
+
+// imageFor{{ .Resource.Kind }} returns the image for the resources
+// belonging to the given {{ .Resource.Kind }} CR name.
+func imageFor{{ .Resource.Kind }}() (string, error) {
+	var imageEnvVar = {{ .Resource.Kind }}IMAGE
+
+    image, found := os.LookupEnv(imageEnvVar)
+    if !found {
+        return "", fmt.Errorf("%s must be set", imageEnvVar)
+    }
+    return image, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

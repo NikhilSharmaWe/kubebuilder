@@ -25,10 +25,12 @@ import (
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 	"sigs.k8s.io/kubebuilder/v3/pkg/model/resource"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins"
+	kustomizeV2Scaffolds "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v2/scaffolds"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/internal/templates/api"
+	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/internal/templates/config/manager"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/internal/templates/config/samples"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/internal/templates/controllers"
-	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3/scaffolds"
+	goV3Scaffolds "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3/scaffolds"
 )
 
 var _ plugins.Scaffolder = &apiScaffolder{}
@@ -72,9 +74,10 @@ func (s *apiScaffolder) Scaffold() error {
 	)
 
 	err = scaffold.Execute(
-		&controllers.Controller{ControllerRuntimeVersion: scaffolds.ControllerRuntimeVersion, Image: s.image},
+		&controllers.Controller{ControllerRuntimeVersion: goV3Scaffolds.ControllerRuntimeVersion, Image: s.image},
 		&api.Types{},
 		&samples.CRDSample{},
+		&manager.Config{ControllerManagerImage: kustomizeV2Scaffolds.ImageName, Image: s.image},
 	)
 	if err != nil {
 		return fmt.Errorf("error updating scaffold: %w", err)

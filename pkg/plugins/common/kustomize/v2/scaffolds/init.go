@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	imageName = "controller:latest"
+	ImageName = "controller:latest"
 )
 
 var _ plugins.Scaffolder = &initScaffolder{}
@@ -73,7 +73,7 @@ func (s *initScaffolder) Scaffold() error {
 		&rbac.LeaderElectionRoleBinding{},
 		&rbac.ServiceAccount{},
 		&manager.Kustomization{},
-		&manager.Config{Image: imageName},
+		&manager.Config{Image: ImageName},
 		&manager.ControllerManagerConfig{},
 		&kdefault.Kustomization{},
 		&kdefault.ManagerAuthProxyPatch{},
