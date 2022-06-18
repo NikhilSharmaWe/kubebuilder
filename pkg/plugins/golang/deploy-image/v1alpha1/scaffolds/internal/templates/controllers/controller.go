@@ -35,7 +35,7 @@ type Controller struct {
 
 	ControllerRuntimeVersion string
 
-	Image string
+	ImageInformed string
 }
 
 // SetTemplateDefaults implements file.Template
@@ -167,6 +167,7 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		// the desired state on the cluster
 		return ctrl.Result{Requeue: true}, nil
 	}
+	return ctrl.Result{}, nil
 }
 
 // deploymentFor{{ .Resource.Kind }} returns a {{ .Resource.Kind }} Deployment object
@@ -198,25 +199,10 @@ func (r *{{ .Resource.Kind }}Reconciler) deploymentFor{{ .Resource.Kind }}(m *{{
 							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},
 					},
-					Containers: []corev1.Container{
-						Image: "{{ .Image }}",
-						Name:    "{{ .Resource.Kind }}",
-                        ImagePullPolicy: {{ .Resource.Kind }}.Spec.ContainerImagePullPolicy,
-						Command: []string{"{{ .Resource.Kind }}"},
-						Ports: []corev1.ContainerPort{
-							ContainerPort: {{ .Resource.Kind }}.Spec.ContainerPort,
-							Name:          "{{ .Resource.Kind }}",
-						},
-						SecurityContext: &corev1.SecurityContext{
-							RunAsNonRoot:             &[]bool{true}[0],
-							AllowPrivilegeEscalation: &[]bool{false}[0],
-							Capabilities: &corev1.Capabilities{
-								Drop: []corev1.Capability{
-									"ALL",
-								},
-							},
-						},
-					},
+					Containers: []corev1.Container{{
+						Image: "memcached:1.6.15-alpine",
+						Name:  "Memcached",
+					}},
 				},
 			},
 		},

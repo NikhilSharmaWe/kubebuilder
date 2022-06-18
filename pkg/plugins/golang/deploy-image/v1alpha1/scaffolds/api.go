@@ -90,7 +90,7 @@ func (s *apiScaffolder) Scaffold() error {
 	if err := scaffold.Execute(
 		&controllers.SuiteTest{},
 		&controllers.Controller{ControllerRuntimeVersion: scaffolds.ControllerRuntimeVersion,
-			Image: s.image},
+			ImageInformed: s.image},
 	); err != nil {
 		return fmt.Errorf("error scaffolding controller: %v", err)
 	}
