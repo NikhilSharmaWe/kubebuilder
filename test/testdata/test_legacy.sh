@@ -33,5 +33,5 @@ build_kb
 # Test project v2, which relies on pre-installed envtest tools to run 'make test'.
 tools_k8s_version="1.19.2"
 fetch_tools
-test_project project-v2
+# test_project project-v2
 
