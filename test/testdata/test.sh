@@ -31,8 +31,9 @@ function test_project {
 build_kb
 
 # Test project v3
-test_project project-v3
-test_project project-v3-multigroup
-test_project project-v3-addon
-test_project project-v3-config
-
+# test_project project-v3
+# test_project project-v3-multigroup
+# test_project project-v3-addon
+# test_project project-v3-config
+# test_project project-v3-with-kustomize-v2
+test_project project-v3-with-deploy-image

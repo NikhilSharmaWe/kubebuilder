@@ -107,10 +107,11 @@ function scaffold_test_project {
     $kb create api --group crew --version v1 --kind Captain --controller=true --resource=true --make=false
     $kb create api --group crew --version v1 --kind FirstMate --controller=true --resource=true --make=false
     $kb create api --group crew --version v1 --kind Admiral --controller=true --resource=true --namespaced=false --make=false
-  elif [[ $project =~ v1beta1 ]]; then
-    header_text 'Creating APIs ...'
-    $kb create api --group crew --version v1 --kind Admiral --controller=true --resource=true --namespaced=false --make=false --crd-version=v1beta1
-    $kb create webhook --group crew --version v1 --kind Admiral --defaulting --webhook-version=v1beta1
+  elif [[ $project == "project-v3-with-deploy-image" ]]; then
+      header_text 'Creating Memcached API with deploy-image plugin ...'
+      $kb create api --group example.com --version v1alpha1 --kind Memcached --image=memcached:1.6.15-alpine --plugins="deploy-image/v1-alpha" --make=false --namespaced=false
+      header_text 'Creating Memcached webhook ...'
+      $kb create webhook --group example.com --version v1alpha1 --kind Memcached --programmatic-validation
   fi
 
   make generate manifests
@@ -121,14 +122,12 @@ function scaffold_test_project {
 
 build_kb
 
-# Project version 2 uses plugin go/v2 (default).
-scaffold_test_project project-v2 --project-version=2
-scaffold_test_project project-v2-multigroup --project-version=2
-scaffold_test_project project-v2-addon --project-version=3 --plugins="go/v2,declarative"
-# Project version 3 (default) uses plugin go/v3 (default).
-scaffold_test_project project-v3
-scaffold_test_project project-v3-multigroup
-scaffold_test_project project-v3-addon --plugins="go/v3,declarative"
-scaffold_test_project project-v3-config --component-config
-scaffold_test_project project-v3-v1beta1
-scaffold_test_project project-v3-with-kustomize-v2 --plugins="kustomize/v2-alpha,base.go.kubebuilder.io/v3"
+## Project version 2 uses plugin go/v2 (default).
+#scaffold_test_project project-v2 --project-version=2
+## Project version 3 (default) uses plugin go/v3 (default).
+#scaffold_test_project project-v3
+#scaffold_test_project project-v3-multigroup
+#scaffold_test_project project-v3-addon --plugins="go/v3,declarative"
+#scaffold_test_project project-v3-config --component-config
+#scaffold_test_project project-v3-with-kustomize-v2 --plugins="kustomize/v2-alpha,base.go.kubebuilder.io/v3"
+scaffold_test_project project-v3-with-deploy-image
