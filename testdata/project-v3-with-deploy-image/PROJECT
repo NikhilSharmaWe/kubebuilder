@@ -3,12 +3,12 @@ layout:
 - go.kubebuilder.io/v3
 plugins:
   deploy-image.go.kubebuilder.io/v1-alpha:
-    containerCommand: memcached -m=64 modern -v
-    containerPort: "11211"
-    image: memcached:1.6.15-alpine
-    resources:
-    - domain: testproject.org
+    resourcesAndOptions:
+    - containerCommand: memcached -m=64 modern -v
+      containerPort: "11211"
+      domain: testproject.org
       group: example.com
+      image: memcached:1.6.15-alpine
       kind: Memcached
       version: v1alpha1
 projectName: project-v3-with-deploy-image
