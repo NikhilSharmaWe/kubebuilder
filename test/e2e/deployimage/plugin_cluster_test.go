@@ -181,7 +181,10 @@ func Run(kbc *utils.TestContext, imageCR string) {
 	By("building the controller image")
 	err = kbc.Make("docker-build", "IMG="+kbc.ImageName)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
+	By("loading the controller docker image into the kind cluster")
+	err = kbc.LoadImageToKindCluster()
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	
 	By("deploying the controller-manager")
 	cmd := exec.Command("make", "deploy", "IMG="+kbc.ImageName)
 	outputMake, err := kbc.Run(cmd)
@@ -190,22 +193,7 @@ func Run(kbc *utils.TestContext, imageCR string) {
 	By("validating that manager Pod/container(s) are restricted")
 	ExpectWithOffset(1, outputMake).NotTo(ContainSubstring("Warning: would violate PodSecurity"))
 
-	By("loading the controller docker image into the kind cluster")
-	err = kbc.LoadImageToKindCluster()
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
-	By("pulling image")
-	err = kbc.LoadImageToKindClusterWithName(imageCR)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
-	// NOTE: If you want to run the test against a GKE cluster, you will need to grant yourself permission.
-	// Otherwise, you may see "... is forbidden: attempt to grant extra privileges"
-	// $ kubectl create clusterrolebinding myname-cluster-admin-binding \
-	// --clusterrole=cluster-admin --user=myname@mycompany.com
-	// https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control
-	By("deploying the controller-manager")
-	err = kbc.Make("deploy", "IMG="+kbc.ImageName)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 	By("validating that the controller-manager pod is running as expected")
 	verifyControllerUp := func() error {
@@ -239,7 +227,9 @@ func Run(kbc *utils.TestContext, imageCR string) {
 		fmt.Fprintln(GinkgoWriter, out)
 	}()
 	EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
-
+	By("pulling image")
+	_ = kbc.LoadImageToKindClusterWithName(imageCR)
+	
 	By("creating an instance of the CR")
 	sampleFile := filepath.Join("config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", kbc.Group, kbc.Version, strings.ToLower(kbc.Kind)))
