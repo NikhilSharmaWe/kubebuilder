@@ -295,7 +295,7 @@ func (tc TestContext) LoadImageToKindClusterWithName(image string) error {
 	cmd := exec.Command("docker", "pull", image)
 	_, err := tc.Run(cmd)
 	if err != nil {
-		warnError(err error)
+		warnError(err)
 	}
 	cluster := "kind"
 	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
