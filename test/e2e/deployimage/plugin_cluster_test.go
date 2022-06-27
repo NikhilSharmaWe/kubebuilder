@@ -228,8 +228,8 @@ func Run(kbc *utils.TestContext, imageCR string) {
 	}()
 	EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
 	By("pulling image")
-	_ = kbc.LoadImageToKindClusterWithName(imageCR)
-	
+	err = kbc.LoadImageToKindClusterWithName(imageCR)
+	Expect(err).To(Not(HaveOccurred()))
 	By("creating an instance of the CR")
 	sampleFile := filepath.Join("config", "samples",
 		fmt.Sprintf("%s_%s_%s.yaml", kbc.Group, kbc.Version, strings.ToLower(kbc.Kind)))

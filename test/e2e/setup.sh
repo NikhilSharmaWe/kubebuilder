@@ -55,7 +55,12 @@ function delete_cluster {
 
 function test_cluster {
   local flags="$@"
-
+  # Pull and load required images for the deploy-image test
+  docker pull memcached:1.4.36-alpine
+  kind load docker-image --name $KIND_CLUSTER memcached:1.4.36-alpine
+  
+  docker pull busybox:1.28
+  kind load docker-image --name $KIND_CLUSTER busybox:1.28
   go test $(dirname "$0")/deployimage $flags
   go test $(dirname "$0")/v2 $flags
   go test $(dirname "$0")/v3 $flags -timeout 30m
