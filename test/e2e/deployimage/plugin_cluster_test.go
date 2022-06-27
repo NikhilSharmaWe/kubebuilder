@@ -184,7 +184,7 @@ func Run(kbc *utils.TestContext, imageCR string) {
 	By("loading the controller docker image into the kind cluster")
 	err = kbc.LoadImageToKindCluster()
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	
+
 	By("deploying the controller-manager")
 	cmd := exec.Command("make", "deploy", "IMG="+kbc.ImageName)
 	outputMake, err := kbc.Run(cmd)
@@ -192,8 +192,6 @@ func Run(kbc *utils.TestContext, imageCR string) {
 
 	By("validating that manager Pod/container(s) are restricted")
 	ExpectWithOffset(1, outputMake).NotTo(ContainSubstring("Warning: would violate PodSecurity"))
-
-
 
 	By("validating that the controller-manager pod is running as expected")
 	verifyControllerUp := func() error {
