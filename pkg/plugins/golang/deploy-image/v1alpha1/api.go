@@ -69,6 +69,9 @@ type createAPISubcommand struct {
 
 	// imageContainerPort indicates the port that we should use in the scaffold
 	imageContainerPort string
+
+	// runAsUser bool will inform that the container will be formed as user or not
+	runAsUser bool
 }
 
 func (p *createAPISubcommand) UpdateMetadata(cliMeta plugin.CLIMetadata, subcmdMeta *plugin.SubcommandMetadata) {
@@ -124,6 +127,7 @@ func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 
 	fs.BoolVar(&p.runMake, "make", true, "if true, run `make generate` after generating files")
 	fs.BoolVar(&p.runManifests, "manifests", true, "if true, run `make manifests` after generating files")
+	fs.BoolVar(&p.runAsUser, "run-as-user", true, "if true, containers formed will be run as user")
 
 	p.options = &goPlugin.Options{}
 
@@ -195,7 +199,8 @@ func (p *createAPISubcommand) Scaffold(fs machinery.Filesystem) error {
 		*p.resource,
 		p.image,
 		p.imageContainerCommand,
-		p.imageContainerPort)
+		p.imageContainerPort,
+		p.runAsUser)
 	scaffolder.InjectFS(fs)
 	err := scaffolder.Scaffold()
 	if err != nil {

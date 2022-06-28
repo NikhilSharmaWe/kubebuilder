@@ -40,11 +40,12 @@ var _ plugins.Scaffolder = &apiScaffolder{}
 // apiScaffolder contains configuration for generating scaffolding for Go type
 // representing the API and controller that implements the behavior for the API.
 type apiScaffolder struct {
-	config   config.Config
-	resource resource.Resource
-	image    string
-	command  string
-	port     string
+	config    config.Config
+	resource  resource.Resource
+	image     string
+	command   string
+	port      string
+	runAsUser bool
 
 	// fs is the filesystem that will be used by the scaffolder
 	fs machinery.Filesystem
@@ -53,13 +54,14 @@ type apiScaffolder struct {
 // NewAPIScaffolder returns a new Scaffolder for declarative
 //nolint: lll
 func NewDeployImageScaffolder(config config.Config, res resource.Resource, image,
-	command, port string) plugins.Scaffolder {
+	command, port string, runAsUser bool) plugins.Scaffolder {
 	return &apiScaffolder{
-		config:   config,
-		resource: res,
-		image:    image,
-		command:  command,
-		port:     port,
+		config:    config,
+		resource:  res,
+		image:     image,
+		command:   command,
+		port:      port,
+		runAsUser: runAsUser,
 	}
 }
 
@@ -143,7 +145,6 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 		res = res[:len(res)-1]
 		err := util.InsertCode(controllerPath, `SecurityContext: &corev1.SecurityContext{
 							RunAsNonRoot:             &[]bool{true}[0],
-							RunAsUser: &[]int64{1000}[0],
 							AllowPrivilegeEscalation: &[]bool{false}[0],
 							Capabilities: &corev1.Capabilities{
 								Drop: []corev1.Capability{
@@ -160,7 +161,6 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 	if len(s.port) > 0 {
 		err := util.InsertCode(controllerPath, `SecurityContext: &corev1.SecurityContext{
 							RunAsNonRoot:             &[]bool{true}[0],
-							RunAsUser: &[]int64{1000}[0],
 							AllowPrivilegeEscalation: &[]bool{false}[0],
 							Capabilities: &corev1.Capabilities{
 								Drop: []corev1.Capability{
@@ -170,6 +170,20 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 						},`, fmt.Sprintf(portTemplate, strings.ToLower(s.resource.Kind)))
 		if err != nil {
 			return fmt.Errorf("error scaffolding container port in the controller: %v", err)
+		}
+	}
+
+	if s.runAsUser {
+		err := util.ReplaceInFile(controllerPath, fmt.Sprintf(containerTemplate,
+			s.image,                          // value for the image
+			strings.ToLower(s.resource.Kind), // value for the name of the container
+		),
+			fmt.Sprintf(containerTemplateIfRunAsUser,
+				s.image,                          // value for the image
+				strings.ToLower(s.resource.Kind), // value for the name of the container
+			))
+		if err != nil {
+			return fmt.Errorf("error scaffolding container with RunAsUser in the controller: %v", err)
 		}
 	}
 	return nil
@@ -200,6 +214,23 @@ func (s *apiScaffolder) scaffoldCreateAPIFromGolang() error {
 }
 
 const containerTemplate = `Containers: []corev1.Container{{
+						Image: "%s",
+						Name:  "%s",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						// Ensure restrictive context for the container
+						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+						SecurityContext: &corev1.SecurityContext{
+							RunAsNonRoot:             &[]bool{true}[0],
+							AllowPrivilegeEscalation: &[]bool{false}[0],
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{
+									"ALL",
+								},
+							},
+						},
+					}}`
+
+const containerTemplateIfRunAsUser = `Containers: []corev1.Container{{
 						Image: "%s",
 						Name:  "%s",
 						ImagePullPolicy: corev1.PullIfNotPresent,
