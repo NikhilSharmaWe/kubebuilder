@@ -124,7 +124,7 @@ func (p *createAPISubcommand) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.imageContainerPort, "image-container-port", "", "[Optional] if informed, "+
 		"will be used to scaffold the container port that should be used by container image in "+
 		"the controller and its spec in the API (CRD/CR). (i.e --image-container-port=\"11211\") ")
-	fs.StringVar(&p.runAsUser, "run-as-user", "1000", "RunAsUser in Security Context for the container formed will be to this value")
+	fs.StringVar(&p.runAsUser, "run-as-user", "1000", "User-Id for the container formed will be set to this value")
 
 	fs.BoolVar(&p.runMake, "make", true, "if true, run `make generate` after generating files")
 	fs.BoolVar(&p.runManifests, "manifests", true, "if true, run `make manifests` after generating files")

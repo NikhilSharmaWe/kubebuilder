@@ -144,8 +144,8 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 			res += fmt.Sprintf("\"%s\",", strings.TrimSpace(value))
 		}
 		res = res[:len(res)-1]
-		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser), 
-		fmt.Sprintf(commandTemplate, res))
+		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser),
+			fmt.Sprintf(commandTemplate, res))
 		if err != nil {
 			return fmt.Errorf("error scaffolding command in the controller: %v", err)
 		}
@@ -153,8 +153,8 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 
 	// Scaffold the port if informed
 	if len(s.port) > 0 {
-		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser), 
-		fmt.Sprintf(portTemplate, strings.ToLower(s.resource.Kind)))
+		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser),
+			fmt.Sprintf(portTemplate, strings.ToLower(s.resource.Kind)))
 		if err != nil {
 			return fmt.Errorf("error scaffolding container port in the controller: %v", err)
 		}
