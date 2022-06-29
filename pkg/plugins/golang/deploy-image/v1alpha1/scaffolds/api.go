@@ -181,7 +181,8 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 		}
 	} else {
 		err := util.InsertCode(controllerPath, `RunAsNonRoot:             &[]bool{true}[0],`,
-			`RunAsUser: &[]int64{1000}[0],`)
+			`
+			RunAsUser: &[]int64{1000}[0],`)
 		if err != nil {
 			return fmt.Errorf("error scaffolding user-id in the controller: %v", err)
 		}
