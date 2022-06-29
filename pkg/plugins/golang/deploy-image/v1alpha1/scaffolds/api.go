@@ -231,7 +231,7 @@ const containerTemplate = `Containers: []corev1.Container{{
 					}}`
 
 const runAsUserTemplate = `
-RunAsUser: &[]int64{%s}[0],`
+							RunAsUser: &[]int64{%s}[0],`
 
 const commandTemplate = `
 						Command:         []string{%s},`
