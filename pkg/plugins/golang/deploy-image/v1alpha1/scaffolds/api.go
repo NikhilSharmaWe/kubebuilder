@@ -174,8 +174,7 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 	}
 
 	if len(s.runAsUser) > 0 {
-		err := util.InsertCode(controllerPath, `RunAsNonRoot:             &[]bool{true}[0],
-		`,
+		err := util.InsertCode(controllerPath, `RunAsNonRoot:             &[]bool{true}[0],`,
 			fmt.Sprintf(runAsUserTemplate, s.runAsUser))
 		if err != nil {
 			return fmt.Errorf("error scaffolding user-id in the controller: %v", err)
@@ -231,7 +230,8 @@ const containerTemplate = `Containers: []corev1.Container{{
 						},
 					}}`
 
-const runAsUserTemplate = `RunAsUser: &[]int64{%s}[0],`
+const runAsUserTemplate = `
+RunAsUser: &[]int64{%s}[0],`
 
 const commandTemplate = `
 						Command:         []string{%s},`
