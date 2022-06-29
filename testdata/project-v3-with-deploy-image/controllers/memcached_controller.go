@@ -159,8 +159,7 @@ func (r *MemcachedReconciler) deploymentForMemcached(m *examplecomv1alpha1.Memca
 						// Ensure restrictive context for the container
 						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 						SecurityContext: &corev1.SecurityContext{
-							RunAsNonRoot:             &[]bool{true}[0],
-							RunAsUser: &[]int64{1000}[0],
+							RunAsNonRoot:             &[]bool{true}[0],RunAsUser: &[]int64{1000}[0],
 							AllowPrivilegeEscalation: &[]bool{false}[0],
 							Capabilities: &corev1.Capabilities{
 								Drop: []corev1.Capability{
