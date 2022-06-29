@@ -129,7 +129,6 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 		fmt.Sprintf(containerTemplate,
 			s.image,                          // value for the image
 			strings.ToLower(s.resource.Kind), // value for the name of the container
-			s.runAsUser,                      // value for the user-id
 		),
 	); err != nil {
 		return fmt.Errorf("error scaffolding container in the controller: %v", err)
@@ -144,8 +143,15 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 			res += fmt.Sprintf("\"%s\",", strings.TrimSpace(value))
 		}
 		res = res[:len(res)-1]
-		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser),
-			fmt.Sprintf(commandTemplate, res))
+		err := util.InsertCode(controllerPath, `SecurityContext: &corev1.SecurityContext{
+							RunAsNonRoot:             &[]bool{true}[0],
+							AllowPrivilegeEscalation: &[]bool{false}[0],
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{
+									"ALL",
+								},
+							},
+						},`, fmt.Sprintf(commandTemplate, res))
 		if err != nil {
 			return fmt.Errorf("error scaffolding command in the controller: %v", err)
 		}
@@ -153,10 +159,31 @@ func (s *apiScaffolder) scafffoldControllerWithImage(scaffold *machinery.Scaffol
 
 	// Scaffold the port if informed
 	if len(s.port) > 0 {
-		err := util.InsertCode(controllerPath, fmt.Sprintf(containerSecurityContextTemplate, s.runAsUser),
-			fmt.Sprintf(portTemplate, strings.ToLower(s.resource.Kind)))
+		err := util.InsertCode(controllerPath, `SecurityContext: &corev1.SecurityContext{
+							RunAsNonRoot:             &[]bool{true}[0],
+							AllowPrivilegeEscalation: &[]bool{false}[0],
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{
+									"ALL",
+								},
+							},
+						},`, fmt.Sprintf(portTemplate, strings.ToLower(s.resource.Kind)))
 		if err != nil {
 			return fmt.Errorf("error scaffolding container port in the controller: %v", err)
+		}
+	}
+
+	if len(s.runAsUser) > 0 {
+		err := util.InsertCode(controllerPath, `RunAsNonRoot:             &[]bool{true}[0],`,
+		fmt.Sprintf(runAsUserTemplate, s.runAsUser))
+		if err != nil {
+			return fmt.Errorf("error scaffolding user-id in the controller: %v", err)
+		}
+	}else{
+		err := util.InsertCode(controllerPath, `RunAsNonRoot:             &[]bool{true}[0],`,
+		`RunAsUser: &[]int64{1000}[0],`)
+		if err != nil {
+			return fmt.Errorf("error scaffolding user-id in the controller: %v", err)
 		}
 	}
 	return nil
@@ -194,7 +221,6 @@ const containerTemplate = `Containers: []corev1.Container{{
 						// More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
 						SecurityContext: &corev1.SecurityContext{
 							RunAsNonRoot:             &[]bool{true}[0],
-							RunAsUser: &[]int64{%s}[0],
 							AllowPrivilegeEscalation: &[]bool{false}[0],
 							Capabilities: &corev1.Capabilities{
 								Drop: []corev1.Capability{
@@ -204,16 +230,8 @@ const containerTemplate = `Containers: []corev1.Container{{
 						},
 					}}`
 
-const containerSecurityContextTemplate = `SecurityContext: &corev1.SecurityContext{
-	RunAsNonRoot:             &[]bool{true}[0],
-	RunAsUser: &[]int64{%s}[0],
-	AllowPrivilegeEscalation: &[]bool{false}[0],
-	Capabilities: &corev1.Capabilities{
-		Drop: []corev1.Capability{
-			"ALL",
-		},
-	},
-},`
+const runAsUserTemplate = `RunAsUser: &[]int64{%s}[0],`
+
 
 const commandTemplate = `
 						Command:         []string{%s},`
