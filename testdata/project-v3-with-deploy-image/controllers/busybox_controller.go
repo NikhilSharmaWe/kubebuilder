@@ -27,6 +27,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -112,7 +114,7 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.busyboxBusybox(log, busybox); err != nil {
+			if err := r.finalizeBusybox(log, busybox); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -175,7 +177,7 @@ func (r *BusyboxReconciler) finalizeBusybox(log logr.Logger, cr *examplecomv1alp
 	// of finalizers include performing backups and deleting
 	// resources that are not owned by this CR, like a PVC.
 	// The following implementation will raise an event
-	r.recorder.Event(cr, "Normal", "Deleting",
+	r.recorder.Event(cr, "Warning", "Deleting",
 		fmt.Sprintf("Custom Resource %s is being deleted from the namespace %s",
 			cr.Name,
 			cr.Namespace))

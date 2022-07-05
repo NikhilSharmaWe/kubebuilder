@@ -27,6 +27,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -104,21 +106,21 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	// Check if the Busybox instance is marked to be deleted, which is
+	// Check if the Memcached instance is marked to be deleted, which is
 	// indicated by the deletion timestamp being set.
-	isBusyboxMarkedToBeDeleted := busybox.GetDeletionTimestamp() != nil
-	if isBusyboxMarkedToBeDeleted {
+	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+	if isMemcachedMarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.memcachedBusybox(log, memcached); err != nil {
+			if err := r.finalizeMemcached(log, memcached); err != nil {
 				return ctrl.Result{}, err
 			}
 
 			// Remove memcachedFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(busybox, memcachedFinalizer)
+			controllerutil.RemoveFinalizer(memcached, memcachedFinalizer)
 			err := r.Update(ctx, memcached)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -175,7 +177,7 @@ func (r *MemcachedReconciler) finalizeMemcached(log logr.Logger, cr *examplecomv
 	// of finalizers include performing backups and deleting
 	// resources that are not owned by this CR, like a PVC.
 	// The following implementation will raise an event
-	r.recorder.Event(cr, "Normal", "Deleting",
+	r.recorder.Event(cr, "Warning", "Deleting",
 		fmt.Sprintf("Custom Resource %s is being deleted from the namespace %s",
 			cr.Name,
 			cr.Namespace))

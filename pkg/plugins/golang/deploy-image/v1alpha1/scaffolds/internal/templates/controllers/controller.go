@@ -73,6 +73,7 @@ import (
 	"context"
 	"time"
 	"fmt"
+	"github.com/go-logr/logr"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -152,21 +153,21 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}
 
-	// Check if the Busybox instance is marked to be deleted, which is
+	// Check if the {{ .Resource.Kind }} instance is marked to be deleted, which is
 	// indicated by the deletion timestamp being set.
-	isBusyboxMarkedToBeDeleted := busybox.GetDeletionTimestamp() != nil
-	if isBusyboxMarkedToBeDeleted {
+	is{{ .Resource.Kind }}MarkedToBeDeleted := {{ lower .Resource.Kind }}.GetDeletionTimestamp() != nil
+	if is{{ .Resource.Kind }}MarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer) {
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.{{ lower .Resource.Kind }}Busybox(log, {{ lower .Resource.Kind }}); err != nil {
+			if err := r.finalize{{ .Resource.Kind }}(log, {{ lower .Resource.Kind }}); err != nil {
 				return ctrl.Result{}, err
 			}
 
 			// Remove memcachedFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(busybox, {{ lower .Resource.Kind }}Finalizer)
+			controllerutil.RemoveFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer)
 			err := r.Update(ctx, {{ lower .Resource.Kind }})
 			if err != nil {
 				return ctrl.Result{}, err
