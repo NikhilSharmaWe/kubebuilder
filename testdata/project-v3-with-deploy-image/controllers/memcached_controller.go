@@ -19,13 +19,16 @@ package controllers
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/go-logr/logr"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -53,7 +56,7 @@ type MemcachedReconciler struct {
 //+kubebuilder:rbac:groups=example.com.testproject.org,resources=memcacheds,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=example.com.testproject.org,resources=memcacheds/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=example.com.testproject.org,resources=memcacheds/finalizers,verbs=update
-//+kubebuilder:rbac:groups=example.com.testproject.org,resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
@@ -78,7 +81,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	memcached := &examplecomv1alpha1.Memcached{}
 	err := r.Get(ctx, req.NamespacedName, memcached)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -104,21 +107,26 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	// Check if the Busybox instance is marked to be deleted, which is
+	// Check if the Memcached instance is marked to be deleted, which is
 	// indicated by the deletion timestamp being set.
-	isBusyboxMarkedToBeDeleted := busybox.GetDeletionTimestamp() != nil
-	if isBusyboxMarkedToBeDeleted {
+	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+	if isMemcachedMarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer(memcached, memcachedFinalizer) {
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.memcachedBusybox(log, memcached); err != nil {
+			if err := r.finalizeMemcached(log, memcached); err != nil {
 				return ctrl.Result{}, err
 			}
 
 			// Remove memcachedFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(busybox, memcachedFinalizer)
+			if ok := controllerutil.RemoveFinalizer(memcached, memcachedFinalizer); !ok {
+				if err != nil {
+					log.Error(errors.New("Unable to remove the finalizer"), "CR.Namespace", memcached.Namespace, "CR.Name", memcached.Name)
+					return ctrl.Result{}, err
+				}
+			}
 			err := r.Update(ctx, memcached)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -130,7 +138,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.deploymentForMemcached(memcached)
 		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -175,7 +183,7 @@ func (r *MemcachedReconciler) finalizeMemcached(log logr.Logger, cr *examplecomv
 	// of finalizers include performing backups and deleting
 	// resources that are not owned by this CR, like a PVC.
 	// The following implementation will raise an event
-	r.recorder.Event(cr, "Normal", "Deleting",
+	r.recorder.Event(cr, "Warning", "Deleting",
 		fmt.Sprintf("Custom Resource %s is being deleted from the namespace %s",
 			cr.Name,
 			cr.Namespace))

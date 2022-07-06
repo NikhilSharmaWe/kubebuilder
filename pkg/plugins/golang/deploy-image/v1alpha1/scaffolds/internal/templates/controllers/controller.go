@@ -66,13 +66,15 @@ package {{ if and .MultiGroup .Resource.Group }}{{ .Resource.PackageName }}{{ el
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"errors"
 	"context"
 	"time"
 	"fmt"
+	"github.com/go-logr/logr"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -101,7 +103,7 @@ type {{ .Resource.Kind }}Reconciler struct {
 //+kubebuilder:rbac:groups={{ .Resource.QualifiedGroup }},resources={{ .Resource.Plural }},verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups={{ .Resource.QualifiedGroup }},resources={{ .Resource.Plural }}/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups={{ .Resource.QualifiedGroup }},resources={{ .Resource.Plural }}/finalizers,verbs=update
-//+kubebuilder:rbac:groups={{ .Resource.QualifiedGroup }},resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
@@ -126,7 +128,7 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 	{{ lower .Resource.Kind }} := &{{ .Resource.ImportAlias }}.{{ .Resource.Kind }}{}
 	err := r.Get(ctx, req.NamespacedName, {{ lower .Resource.Kind }})
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -152,21 +154,26 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}
 
-	// Check if the Busybox instance is marked to be deleted, which is
+	// Check if the {{ .Resource.Kind }} instance is marked to be deleted, which is
 	// indicated by the deletion timestamp being set.
-	isBusyboxMarkedToBeDeleted := busybox.GetDeletionTimestamp() != nil
-	if isBusyboxMarkedToBeDeleted {
+	is{{ .Resource.Kind }}MarkedToBeDeleted := {{ lower .Resource.Kind }}.GetDeletionTimestamp() != nil
+	if is{{ .Resource.Kind }}MarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer) {
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.{{ lower .Resource.Kind }}Busybox(log, {{ lower .Resource.Kind }}); err != nil {
+			if err := r.finalize{{ .Resource.Kind }}(log, {{ lower .Resource.Kind }}); err != nil {
 				return ctrl.Result{}, err
 			}
 
 			// Remove memcachedFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(busybox, {{ lower .Resource.Kind }}Finalizer)
+			if ok:= controllerutil.RemoveFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer); !ok{
+				if err != nil {
+					log.Error(errors.New("Unable to remove the finalizer"), "CR.Namespace", {{ lower .Resource.Kind }}.Namespace, "CR.Name", {{ lower .Resource.Kind }}.Name)
+					return ctrl.Result{}, err
+				}
+			}
 			err := r.Update(ctx, {{ lower .Resource.Kind }})
 			if err != nil {
 				return ctrl.Result{}, err
@@ -178,7 +185,7 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 	// Check if the deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: {{ lower .Resource.Kind }}.Name, Namespace: {{ lower .Resource.Kind }}.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.deploymentFor{{ .Resource.Kind }}({{ lower .Resource.Kind }})
 		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
