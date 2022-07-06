@@ -20,6 +20,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -51,13 +58,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - example.com.testproject.org
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
 - apiGroups:
   - example.com.testproject.org
   resources:
