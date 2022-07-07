@@ -124,13 +124,14 @@ func (s *apiScaffolder) Scaffold() error {
 	return nil
 }
 
-func (s *apiScaffolder) updateMainEventRecorder() error {
-	defaultMainPath := "main.go"
-	err := util.InsertCode(defaultMainPath, `Scheme: mgr.GetScheme(),
-	`,
-		fmt.Sprintf(recorderTemplate, strings.ToLower(s.resource.Kind)))
-	if err != nil {
-		return fmt.Errorf("error scaffolding event recorder while creating the controller in main.go: %v", err)
+// TODO: replace this implementation by creating its own MainUpdater which will have its own controller template which set the recorder.
+func (s *apiScaffolder) updateMainEventRecorder(scaffold *machinery.Scaffold) error {
+	doAPI := s.resource.HasAPI()
+	doController := s.resource.HasController()
+	if err := scaffold.Execute(
+		&templates.MainUpdater{WireResource: doAPI, WireController: doController},
+	); err != nil {
+		return fmt.Errorf("error updating main.go: %v", err)
 	}
 	return nil
 }
