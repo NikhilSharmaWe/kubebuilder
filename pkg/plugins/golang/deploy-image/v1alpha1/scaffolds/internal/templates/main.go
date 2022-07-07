@@ -46,6 +46,8 @@ func (f *Main) SetTemplateDefaults() error {
 		machinery.NewMarkerFor(f.Path, setupMarker),
 	)
 
+	f.IfExistsAction = machinery.OverwriteFile
+	
 	return nil
 }
 
@@ -152,7 +154,7 @@ func (f *MainUpdater) GetCodeFragments() machinery.CodeFragmentsMap {
 
 	// Generate setup code fragments
 	setup := make([]string, 0)
-	if f.WireController {
+	if f.WireController { 
 		if !f.MultiGroup || f.Resource.Group == "" {
 			setup = append(setup, fmt.Sprintf(reconcilerSetupCodeFragment,
 				f.Resource.Kind, strings.ToLower(f.Resource.Kind), f.Resource.Kind))
