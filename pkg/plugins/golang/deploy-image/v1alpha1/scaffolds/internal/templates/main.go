@@ -107,6 +107,7 @@ const (
 	multiGroupReconcilerSetupCodeFragment = `if err = (&%scontrollers.%sReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("%s-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "%s")
 		os.Exit(1)
@@ -157,7 +158,7 @@ func (f *MainUpdater) GetCodeFragments() machinery.CodeFragmentsMap {
 				f.Resource.Kind, strings.ToLower(f.Resource.Kind), f.Resource.Kind))
 		} else {
 			setup = append(setup, fmt.Sprintf(multiGroupReconcilerSetupCodeFragment,
-				f.Resource.PackageName(), f.Resource.Kind, f.Resource.Kind))
+				f.Resource.PackageName(), f.Resource.Kind, strings.ToLower(f.Resource.Kind), f.Resource.Kind))
 		}
 	}
 	if f.WireWebhook {
