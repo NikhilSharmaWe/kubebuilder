@@ -16,6 +16,7 @@ package templates
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
 )
