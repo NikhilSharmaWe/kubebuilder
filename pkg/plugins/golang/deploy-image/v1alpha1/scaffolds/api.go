@@ -125,7 +125,8 @@ func (s *apiScaffolder) Scaffold() error {
 	return nil
 }
 
-// TODO: replace this implementation by creating its own MainUpdater which will have its own controller template which set the recorder.
+// TODO: replace this implementation by creating its own MainUpdater
+// which will have its own controller template which set the recorder.
 func (s *apiScaffolder) updateMainEventRecorder(scaffold *machinery.Scaffold) error {
 	doAPI := s.resource.HasAPI()
 	doController := s.resource.HasController()
@@ -262,5 +263,3 @@ const portTemplate = `
 							ContainerPort: %s.Spec.ContainerPort,
 							Name:          "%s",
 						}},`
-
-const recorderTemplate = `Recorder: mgr.GetEventRecorderFor("%s-controller"),`
