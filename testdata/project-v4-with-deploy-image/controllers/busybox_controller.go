@@ -183,8 +183,16 @@ func (r *BusyboxReconciler) deploymentForBusybox(busybox *examplecomv1alpha1.Bus
 
 // labelsForBusybox returns the labels for selecting the resources
 // belonging to the given  Busybox CR name.
+// Note that the labels follows the standards defined in: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
 func labelsForBusybox(name string) map[string]string {
-	return map[string]string{"type": "busybox", "busybox_cr": name}
+	return map[string]string{"app.kubernetes.io/name": "busybox",
+		"app.kubernetes.io/instance":   name,
+		"app.kubernetes.io/version":    "",
+		"app.kubernetes.io/component":  "Busybox",
+		"app.kubernetes.io/part-of":    "",
+		"app.kubernetes.io/managed-by": "kubebuilder",
+		"app.kubernetes.io/created-by": "",
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

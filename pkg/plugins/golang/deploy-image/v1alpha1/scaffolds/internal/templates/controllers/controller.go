@@ -216,8 +216,16 @@ func (r *{{ .Resource.Kind }}Reconciler) deploymentFor{{ .Resource.Kind }}({{ lo
 
 // labelsFor{{ .Resource.Kind }} returns the labels for selecting the resources
 // belonging to the given  {{ .Resource.Kind }} CR name.
+// Note that the labels follows the standards defined in: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
 func labelsFor{{ .Resource.Kind }}(name string) map[string]string {
-	return map[string]string{"type": "{{ lower .Resource.Kind }}", "{{ lower .Resource.Kind }}_cr": name}
+	return map[string]string{"app.kubernetes.io/name": "{{ lower .Resource.Kind }}",
+		"app.kubernetes.io/instance": name,
+		"app.kubernetes.io/version": "",
+		"app.kubernetes.io/component": "{{ .Resource.Kind }}",
+		"app.kubernetes.io/part-of": "",
+		"app.kubernetes.io/managed-by": "kubebuilder",
+		"app.kubernetes.io/created-by": "",
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

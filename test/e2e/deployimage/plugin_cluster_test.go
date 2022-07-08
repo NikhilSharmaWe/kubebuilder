@@ -262,6 +262,19 @@ func Run(kbc *utils.TestContext) {
 		return nil
 	}
 	EventuallyWithOffset(1, getMemcachedPodStatus, time.Minute, time.Second).Should(Succeed())
+
+	By("getting memcached deploy by labels")
+	getMemcachedDeploymentName := func() string {
+		memcachedDeploymentName, err := kbc.Kubectl.Get(
+			false, "deployment",
+			//nolint: lll
+			"-l", "app.kubernetes.io/instance=memcached-sample,app.kubernetes.io/component=Memcached,app.kubernetes.io/managed-by=kubebuilder",
+			"-o", "jsonpath={..metadata.name}")
+		Expect(err).NotTo(HaveOccurred())
+		return memcachedDeploymentName
+	}
+	Eventually(getMemcachedDeploymentName, 2*time.Minute, time.Second).ShouldNot(BeEmpty())
+
 }
 
 func uncommentPodStandards(kbc *utils.TestContext) {
