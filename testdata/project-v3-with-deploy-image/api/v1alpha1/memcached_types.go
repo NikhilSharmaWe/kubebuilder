@@ -38,12 +38,12 @@ type MemcachedSpec struct {
 // MemcachedStatus defines the observed state of Memcached
 type MemcachedStatus struct {
 	// Represents the observations of a Memcached's current state.
-	// .Memcached.status.conditions.type are: "Available", "Progressing", and "Degraded"
-	// .Memcached.status.conditions.status are one of True, False, Unknown.
-	// .Memcached.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// Memcached.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// Memcached.status.conditions.status are one of True, False, Unknown.
+	// Memcached.status.conditions.reason the value should be a CamelCase string and producers of specific
 	// condition types may define expected values and meanings for this field, and whether the values
 	// are considered a guaranteed API.
-	// .Memcached.status.conditions.Message is a human readable message indicating details about the transition.
+	// Memcached.status.conditions.Message is a human readable message indicating details about the transition.
 
 	Conditions []metav1.Condition `
 		json:"conditions,omitempty" 
