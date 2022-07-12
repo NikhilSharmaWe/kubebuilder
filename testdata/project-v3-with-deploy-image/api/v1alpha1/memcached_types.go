@@ -45,11 +45,7 @@ type MemcachedStatus struct {
 	// are considered a guaranteed API.
 	// Memcached.status.conditions.Message is a human readable message indicating details about the transition.
 
-	Conditions []metav1.Condition `
-		json:"conditions,omitempty" 
-		patchStrategy:"merge" 
-		patchMergeKey:"type" 
-		protobuf:"bytes,1,rep,name=conditions"`
+	Conditions []metav1.Condition
 }
 
 //+kubebuilder:object:root=true
