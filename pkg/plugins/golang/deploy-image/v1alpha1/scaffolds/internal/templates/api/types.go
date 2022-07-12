@@ -88,12 +88,12 @@ type {{ .Resource.Kind }}Spec struct {
 // {{ .Resource.Kind }}Status defines the observed state of {{ .Resource.Kind }}
 type {{ .Resource.Kind }}Status struct {
 	// Represents the observations of a {{ .Resource.Kind }}'s current state.
-	// .{{ .Resource.Kind }}.status.conditions.type are: "Available", "Progressing", and "Degraded"
-	// .{{ .Resource.Kind }}.status.conditions.status are one of True, False, Unknown.
-	// .{{ .Resource.Kind }}.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// {{ .Resource.Kind }}.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// {{ .Resource.Kind }}.status.conditions.status are one of True, False, Unknown.
+	// {{ .Resource.Kind }}.status.conditions.reason the value should be a CamelCase string and producers of specific
 	// condition types may define expected values and meanings for this field, and whether the values
 	// are considered a guaranteed API.
-	// .{{ .Resource.Kind }}.status.conditions.Message is a human readable message indicating details about the transition.
+	// {{ .Resource.Kind }}.status.conditions.Message is a human readable message indicating details about the transition.
 
 	Conditions []metav1.Condition ` + "`" + `
 		json:"conditions,omitempty" 

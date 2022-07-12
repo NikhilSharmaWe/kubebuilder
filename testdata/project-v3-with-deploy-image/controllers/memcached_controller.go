@@ -41,6 +41,13 @@ import (
 
 const memcachedFinalizer = "example.com.testproject.org/finalizer"
 
+// Definitions to manage status conditions
+const (
+	typeAvailable   = "Available"
+	typeProgressing = "Progressing"
+	typeDegraded    = "Degraded"
+)
+
 // MemcachedReconciler reconciles a Memcached object
 type MemcachedReconciler struct {
 	client.Client
@@ -92,6 +99,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	memcached.Status.Conditions = append(memcached.Status.Conditions, metav1.Condition{Type: typeProgressing, Status: "True", Reason: "Reconciling", Message: "Starting reconciliation"})
+	err = r.Status().Update(ctx, memcached)
+	if err != nil {
+		log.Error(err, "Failed to update Memcached status")
+		return ctrl.Result{}, err
+	}
+
 	// Let's add a finalizer. Then, we can define some operations which should
 	// occurs before the custom resource to be deleted.
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/
@@ -116,6 +130,17 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			log.Info("Performing Finalizer Operations for Memcached before delete CR")
+
+			// The following implementation will update the status
+			memcached.Status.Conditions = append(memcached.Status.Conditions, metav1.Condition{Type: typeDegraded,
+				Status: "True", Reason: "Finalizing",
+				Message: fmt.Sprintf("Performing finalizer operations for the custom resource: %s ", memcached.Name)})
+			err := r.Status().Update(ctx, memcached)
+			if err != nil {
+				log.Error(err, "Failed to update Memcached status")
+				return ctrl.Result{}, err
+			}
+
 			r.doFinalizerOperationsForMemcached(memcached)
 
 			// Remove memcachedFinalizer. Once all finalizers have been
@@ -126,7 +151,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					return ctrl.Result{}, err
 				}
 			}
-			err := r.Update(ctx, memcached)
+			err = r.Update(ctx, memcached)
 			if err != nil {
 				log.Error(err, "Failed to remove finalizer for Memcached")
 			}
@@ -144,6 +169,16 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+			// The following implementation will update the status
+			memcached.Status.Conditions = append(memcached.Status.Conditions, metav1.Condition{Type: typeAvailable,
+				Status: "False", Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", memcached.Name, err)})
+			if err := r.Status().Update(ctx, memcached); err != nil {
+				log.Error(err, "Failed to update Memcached status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully
@@ -164,12 +199,31 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		err = r.Update(ctx, found)
 		if err != nil {
 			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+
+			// The following implementation will update the status
+			memcached.Status.Conditions = append(memcached.Status.Conditions, metav1.Condition{Type: typeDegraded,
+				Status: "True", Reason: "Resizing",
+				Message: fmt.Sprintf("Failed to update the size for the custom resource (%s): (%s)", memcached.Name, err)})
+			if err := r.Status().Update(ctx, memcached); err != nil {
+				log.Error(err, "Failed to update Memcached status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Since it fails we want to re-queue the reconciliation
 		// The reconciliation will only stop when we be able to ensure
 		// the desired state on the cluster
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// The following implementation will update the status
+	memcached.Status.Conditions = append(memcached.Status.Conditions, metav1.Condition{Type: typeAvailable,
+		Status: "True", Reason: "Reconciling",
+		Message: fmt.Sprintf("Deployment for custom resource (%s) created succefully", memcached.Name)})
+	if err := r.Status().Update(ctx, memcached); err != nil {
+		log.Error(err, "Failed to update Memcached status")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
