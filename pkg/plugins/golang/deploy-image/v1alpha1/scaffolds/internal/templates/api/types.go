@@ -96,9 +96,9 @@ type {{ .Resource.Kind }}Status struct {
 	// {{ .Resource.Kind }}.status.conditions.Message is a human readable message indicating details about the transition.
 
 	Conditions []metav1.Condition ` + "`" + `json:"conditions,omitempty" 
-											patchStrategy:"merge" 
-											patchMergeKey:"type" 
-											protobuf:"bytes,1,rep,name=conditions"` + "`" + `
+									patchStrategy:"merge" 
+									patchMergeKey:"type" 
+									protobuf:"bytes,1,rep,name=conditions"` + "`" + `
 }
 
 //+kubebuilder:object:root=true
