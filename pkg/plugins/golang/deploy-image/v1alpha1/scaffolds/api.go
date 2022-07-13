@@ -139,7 +139,7 @@ func (s *apiScaffolder) Scaffold() error {
 
 func (s *apiScaffolder) addDefinitionsToManageStatusConditions() error {
 	suitePath := filepath.Join("controllers", "suite_test.go")
-	if err = util.InsertCode(suitePath, `var testEnv *envtest.Environment
+	if err := util.InsertCode(suitePath, `var testEnv *envtest.Environment
 	`,
 	`// Definitions to manage status conditions
 	const (
@@ -149,6 +149,7 @@ func (s *apiScaffolder) addDefinitionsToManageStatusConditions() error {
 	)`); err != nil {
 		return fmt.Errorf("error scaffolding definitions for managing status conditions in controllers/suite_test.go")
 	}
+	return nil;
 }
 
 // addEnvVarIntoManager will update the config/manager/manager.yaml by adding
