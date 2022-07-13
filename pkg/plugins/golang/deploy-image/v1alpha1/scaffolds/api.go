@@ -141,12 +141,12 @@ func (s *apiScaffolder) addDefinitionsToManageStatusConditions() error {
 	suitePath := filepath.Join("controllers", "suite_test.go")
 	if err := util.InsertCode(suitePath, `var testEnv *envtest.Environment`,
 		`
-	// Definitions to manage status conditions
-	const (
-		typeAvailable = "Available"
-		typeProgressing = "Progressing"
-		typeDegraded = "Degraded"
-	)`); err != nil {
+// Definitions to manage status conditions
+const (
+	typeAvailable = "Available"
+	typeProgressing = "Progressing"
+	typeDegraded = "Degraded"
+)`); err != nil {
 		return fmt.Errorf("error scaffolding definitions for managing status conditions in controllers/suite_test.go")
 	}
 	return nil
