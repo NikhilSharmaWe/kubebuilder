@@ -89,13 +89,6 @@ import (
 
 const {{ lower .Resource.Kind }}Finalizer = "{{ .Resource.Group }}.{{ .Resource.Domain }}/finalizer"
 
-// Definitions to manage status conditions
-const (
-	typeAvailable = "Available"
-	typeProgressing = "Progressing"
-	typeDegraded = "Degraded"
-)
-
 // {{ .Resource.Kind }}Reconciler reconciles a {{ .Resource.Kind }} object
 type {{ .Resource.Kind }}Reconciler struct {
 	client.Client

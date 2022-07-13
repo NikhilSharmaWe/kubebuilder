@@ -120,6 +120,10 @@ func (s *apiScaffolder) Scaffold() error {
 		return fmt.Errorf("error updating main.go: %v", err)
 	}
 
+	if err := s.addDefinitionsToManageStatusConditions(); err != nil {
+		return fmt.Errorf("error updating controllers/suite_test.go: %v", err)
+	}
+
 	if err := scaffold.Execute(
 		&controllers.ControllerTest{Port: s.port},
 	); err != nil {
@@ -131,6 +135,20 @@ func (s *apiScaffolder) Scaffold() error {
 	}
 
 	return nil
+}
+
+func (s *apiScaffolder) addDefinitionsToManageStatusConditions() error {
+	suitePath := filepath.Join("controllers", "suite_test.go")
+	if err = util.InsertCode(suitePath, `var testEnv *envtest.Environment
+	`,
+	`// Definitions to manage status conditions
+	const (
+		typeAvailable = "Available"
+		typeProgressing = "Progressing"
+		typeDegraded = "Degraded"
+	)`); err != nil {
+		return fmt.Errorf("error scaffolding definitions for managing status conditions in controllers/suite_test.go")
+	}
 }
 
 // addEnvVarIntoManager will update the config/manager/manager.yaml by adding
