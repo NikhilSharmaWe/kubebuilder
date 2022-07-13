@@ -41,6 +41,12 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+	// Definitions to manage status conditions
+	const (
+		typeAvailable = "Available"
+		typeProgressing = "Progressing"
+		typeDegraded = "Degraded"
+	)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
