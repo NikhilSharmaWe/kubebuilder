@@ -99,8 +99,7 @@ type {{ .Resource.Kind }}Status struct {
 		json:"conditions,omitempty" 
 		patchStrategy:"merge" 
 		patchMergeKey:"type" 
-		protobuf:"bytes,1,rep,name=conditions"` 
-		+ "`" + `
+		protobuf:"bytes,1,rep,name=conditions"` + "`" + `
 }
 
 //+kubebuilder:object:root=true
