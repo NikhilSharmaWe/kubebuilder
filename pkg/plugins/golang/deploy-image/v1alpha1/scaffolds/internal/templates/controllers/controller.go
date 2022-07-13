@@ -89,6 +89,13 @@ import (
 
 const {{ lower .Resource.Kind }}Finalizer = "{{ .Resource.Group }}.{{ .Resource.Domain }}/finalizer"
 
+// Definitions to manage status conditions
+const (
+	typeAvailable{{ .Resource.Kind }} = "Available"
+	typeProgressing{{ .Resource.Kind }} = "Progressing"
+	typeDegraded{{ .Resource.Kind }} = "Degraded"
+)
+
 // {{ .Resource.Kind }}Reconciler reconciles a {{ .Resource.Kind }} object
 type {{ .Resource.Kind }}Reconciler struct {
 	client.Client
@@ -139,6 +146,13 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
+	{{ lower .Resource.Kind }}.Status.Conditions = append({{ lower .Resource.Kind }}.Status.Conditions, metav1.Condition{Type: typeProgressing{{ .Resource.Kind }}, Status: "True",Reason: "Reconciling", Message: "Starting reconciliation"})
+	err = r.Status().Update(ctx, {{ lower .Resource.Kind }})
+	if err != nil {
+		log.Error(err, "Failed to update {{ .Resource.Kind }} status")
+		return ctrl.Result{}, err
+	}
+
 	// Let's add a finalizer. Then, we can define some operations which should
 	// occurs before the custom resource to be deleted.
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/
@@ -159,13 +173,24 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 	is{{ .Resource.Kind }}MarkedToBeDeleted := {{ lower .Resource.Kind }}.GetDeletionTimestamp() != nil
 	if is{{ .Resource.Kind }}MarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer) {
-			// Run finalization logic for memcachedFinalizer. If the
+			// Run finalization logic for {{ lower .Resource.Kind }}Finalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			log.Info("Performing Finalizer Operations for {{ .Resource.Kind }} before delete CR")
+
+			// The following implementation will update the status
+			{{ lower .Resource.Kind }}.Status.Conditions = append({{ lower .Resource.Kind }}.Status.Conditions, metav1.Condition{Type: typeDegraded{{ .Resource.Kind }},
+				Status: "True", Reason: "Finalizing",
+				Message: fmt.Sprintf("Performing finalizer operations for the custom resource: %s ", {{ lower .Resource.Kind }}.Name)})
+			err := r.Status().Update(ctx, {{ lower .Resource.Kind }})
+			if err != nil {
+				log.Error(err, "Failed to update {{ .Resource.Kind }} status")
+				return ctrl.Result{}, err
+			}
+
 			r.doFinalizerOperationsFor{{ .Resource.Kind }}({{ lower .Resource.Kind }})
 
-			// Remove memcachedFinalizer. Once all finalizers have been
+			// Remove {{ lower .Resource.Kind }}Finalizer. Once all finalizers have been
 			// removed, the object will be deleted.
 			if ok:= controllerutil.RemoveFinalizer({{ lower .Resource.Kind }}, {{ lower .Resource.Kind }}Finalizer); !ok{
 				if err != nil {
@@ -173,7 +198,7 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 					return ctrl.Result{}, err
 				}
 			}
-			err := r.Update(ctx, {{ lower .Resource.Kind }})
+			err = r.Update(ctx, {{ lower .Resource.Kind }})
 			if err != nil {
 				log.Error(err, "Failed to remove finalizer for {{ .Resource.Kind }}")
 			}
@@ -191,6 +216,16 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+			// The following implementation will update the status
+			{{ lower .Resource.Kind }}.Status.Conditions = append({{ lower .Resource.Kind }}.Status.Conditions, metav1.Condition{Type: typeAvailable{{ .Resource.Kind }},
+				Status: "False",Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", {{ lower .Resource.Kind }}.Name, err)})
+			if err := r.Status().Update(ctx, {{ lower .Resource.Kind }}); err != nil {
+				log.Error(err, "Failed to update {{ .Resource.Kind }} status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully 
@@ -211,12 +246,31 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 		err = r.Update(ctx, found)
 		if err != nil {
 			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+
+			// The following implementation will update the status
+			{{ lower .Resource.Kind }}.Status.Conditions = append({{ lower .Resource.Kind }}.Status.Conditions, metav1.Condition{Type: typeDegraded{{ .Resource.Kind }},
+				Status: "True",Reason: "Resizing",
+				Message: fmt.Sprintf("Failed to update the size for the custom resource (%s): (%s)", {{ lower .Resource.Kind }}.Name, err)})
+			if err := r.Status().Update(ctx, {{ lower .Resource.Kind }}); err != nil {
+				log.Error(err, "Failed to update {{ .Resource.Kind }} status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Since it fails we want to re-queue the reconciliation
 		// The reconciliation will only stop when we be able to ensure 
 		// the desired state on the cluster
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// The following implementation will update the status
+	{{ lower .Resource.Kind }}.Status.Conditions = append({{ lower .Resource.Kind }}.Status.Conditions, metav1.Condition{Type: typeAvailable{{ .Resource.Kind }},
+		Status: "True",Reason: "Reconciling",
+		Message: fmt.Sprintf("Deployment for custom resource (%s) created succefully", {{ lower .Resource.Kind }}.Name)})
+	if err := r.Status().Update(ctx, {{ lower .Resource.Kind }}); err != nil {
+		log.Error(err, "Failed to update {{ .Resource.Kind }} status")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
