@@ -41,6 +41,13 @@ import (
 
 const busyboxFinalizer = "example.com.testproject.org/finalizer"
 
+// Definitions to manage status conditions
+const (
+	typeAvailableBusybox   = "Available"
+	typeProgressingBusybox = "Progressing"
+	typeDegradedBusybox    = "Degraded"
+)
+
 // BusyboxReconciler reconciles a Busybox object
 type BusyboxReconciler struct {
 	client.Client
@@ -92,6 +99,13 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
+	busybox.SetConditionBusybox(metav1.Condition{Type: typeProgressingBusybox, Status: "True", Reason: "Reconciling", Message: "Starting reconciliation"})
+	err = r.Status().Update(ctx, busybox)
+	if err != nil {
+		log.Error(err, "Failed to update Busybox status")
+		return ctrl.Result{}, err
+	}
+
 	// Let's add a finalizer. Then, we can define some operations which should
 	// occurs before the custom resource to be deleted.
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/
@@ -112,13 +126,25 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	isBusyboxMarkedToBeDeleted := busybox.GetDeletionTimestamp() != nil
 	if isBusyboxMarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer(busybox, busyboxFinalizer) {
-			// Run finalization logic for memcachedFinalizer. If the
+			// Run finalization logic for busyboxFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			log.Info("Performing Finalizer Operations for Busybox before delete CR")
+
+			// The following implementation will update the status
+			busybox.SetConditionBusybox(metav1.Condition{Type: typeDegradedBusybox,
+				Status: "True", Reason: "Finalizing",
+				Message: fmt.Sprintf("Performing finalizer operations for the custom resource: %s ", busybox.Name)})
+
+			err := r.Status().Update(ctx, busybox)
+			if err != nil {
+				log.Error(err, "Failed to update Busybox status")
+				return ctrl.Result{}, err
+			}
+
 			r.doFinalizerOperationsForBusybox(busybox)
 
-			// Remove memcachedFinalizer. Once all finalizers have been
+			// Remove busyboxFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
 			if ok := controllerutil.RemoveFinalizer(busybox, busyboxFinalizer); !ok {
 				if err != nil {
@@ -126,7 +152,7 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 					return ctrl.Result{}, err
 				}
 			}
-			err := r.Update(ctx, busybox)
+			err = r.Update(ctx, busybox)
 			if err != nil {
 				log.Error(err, "Failed to remove finalizer for Busybox")
 			}
@@ -144,6 +170,17 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		err = r.Create(ctx, dep)
 		if err != nil {
 			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+			// The following implementation will update the status
+			busybox.SetConditionBusybox(metav1.Condition{Type: typeAvailableBusybox,
+				Status: "False", Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", busybox.Name, err)})
+
+			if err := r.Status().Update(ctx, busybox); err != nil {
+				log.Error(err, "Failed to update Busybox status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Deployment created successfully
@@ -164,12 +201,33 @@ func (r *BusyboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		err = r.Update(ctx, found)
 		if err != nil {
 			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+
+			// The following implementation will update the status
+			busybox.SetConditionBusybox(metav1.Condition{Type: typeDegradedBusybox,
+				Status: "True", Reason: "Resizing",
+				Message: fmt.Sprintf("Failed to update the size for the custom resource (%s): (%s)", busybox.Name, err)})
+
+			if err := r.Status().Update(ctx, busybox); err != nil {
+				log.Error(err, "Failed to update Busybox status")
+				return ctrl.Result{}, err
+			}
+
 			return ctrl.Result{}, err
 		}
 		// Since it fails we want to re-queue the reconciliation
 		// The reconciliation will only stop when we be able to ensure
 		// the desired state on the cluster
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// The following implementation will update the status
+	busybox.SetConditionBusybox(metav1.Condition{Type: typeAvailableBusybox,
+		Status: "True", Reason: "Reconciling",
+		Message: fmt.Sprintf("Deployment for custom resource (%s) created succefully", busybox.Name)})
+
+	if err := r.Status().Update(ctx, busybox); err != nil {
+		log.Error(err, "Failed to update Busybox status")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil

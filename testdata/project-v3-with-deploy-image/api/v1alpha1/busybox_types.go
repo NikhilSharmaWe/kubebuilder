@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubeclock "k8s.io/apimachinery/pkg/util/clock"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -39,8 +40,16 @@ type BusyboxSpec struct {
 
 // BusyboxStatus defines the observed state of Busybox
 type BusyboxStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Represents the observations of a Busybox's current state.
+	// Busybox.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// Busybox.status.conditions.status are one of True, False, Unknown.
+	// Busybox.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// condition types may define expected values and meanings for this field, and whether the values
+	// are considered a guaranteed API.
+	// Busybox.status.conditions.Message is a human readable message indicating details about the transition.
+	// For further information see: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 //+kubebuilder:object:root=true
@@ -62,6 +71,24 @@ type BusyboxList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Busybox `json:"items"`
+}
+
+func (customResource *Busybox) SetConditionBusybox(newCondition metav1.Condition) {
+	// clock is used to set status condition timestamps.
+	var clockBusybox kubeclock.Clock = &kubeclock.RealClock{}
+
+	conditions := customResource.Status.Conditions
+	newCondition.LastTransitionTime = metav1.Time{Time: clockBusybox.Now()}
+
+	for i, condition := range conditions {
+		if condition.Type == newCondition.Type {
+			if condition.Status == newCondition.Status {
+				newCondition.LastTransitionTime = condition.LastTransitionTime
+			}
+			(conditions)[i] = newCondition
+		}
+	}
+	conditions = append(conditions, newCondition)
 }
 
 func init() {
