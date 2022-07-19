@@ -60,12 +60,14 @@ func (f *Types) SetTemplateDefaults() error {
 	return nil
 }
 
+//nolint:lll
 const typesTemplate = `{{ .Boilerplate }}
 
 package {{ .Resource.Version }}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubeclock "k8s.io/apimachinery/pkg/util/clock"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -92,8 +94,16 @@ type {{ .Resource.Kind }}Spec struct {
 
 // {{ .Resource.Kind }}Status defines the observed state of {{ .Resource.Kind }}
 type {{ .Resource.Kind }}Status struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Represents the observations of a {{ .Resource.Kind }}'s current state.
+	// {{ .Resource.Kind }}.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// {{ .Resource.Kind }}.status.conditions.status are one of True, False, Unknown.
+	// {{ .Resource.Kind }}.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// condition types may define expected values and meanings for this field, and whether the values
+	// are considered a guaranteed API.
+	// {{ .Resource.Kind }}.status.conditions.Message is a human readable message indicating details about the transition.
+	// For further information see: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+
+	Conditions []metav1.Condition ` + "`" + `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` + "`" + `
 }
 
 //+kubebuilder:object:root=true
@@ -122,6 +132,25 @@ type {{ .Resource.Kind }}List struct {
 	metav1.TypeMeta ` + "`" + `json:",inline"` + "`" + `
 	metav1.ListMeta ` + "`" + `json:"metadata,omitempty"` + "`" + `
 	Items           []{{ .Resource.Kind }} ` + "`" + `json:"items"` + "`" + `
+}
+
+// SetCondition adds (or updates) the set of conditions associated with the given Custom Resource
+func (customResource *{{ .Resource.Kind }}) SetCondition{{ .Resource.Kind }}(newCondition metav1.Condition) {
+	// clock is used to set status condition timestamps.
+	var clock{{ .Resource.Kind }} kubeclock.Clock = &kubeclock.RealClock{}
+
+	conditions := customResource.Status.Conditions
+	newCondition.LastTransitionTime = metav1.Time{Time: clock{{ .Resource.Kind }}.Now()}
+
+	for i, condition := range conditions {
+		if condition.Type == newCondition.Type {
+			if condition.Status == newCondition.Status {
+				newCondition.LastTransitionTime = condition.LastTransitionTime
+			}
+			(conditions)[i] = newCondition
+		}
+	}
+	conditions = append(conditions, newCondition)
 }
 
 func init() {

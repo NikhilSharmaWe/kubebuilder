@@ -17,6 +17,7 @@ limitations under the License.
 package deployimage
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -27,12 +28,14 @@ import (
 
 	//nolint:golint
 	//nolint:revive
+	goyaml "github.com/goccy/go-yaml"
 	. "github.com/onsi/ginkgo"
 
 	//nolint:golint
 	//nolint:revive
 	. "github.com/onsi/gomega"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kubebuilder/v3/test/e2e/utils"
 )
 
@@ -262,6 +265,27 @@ func Run(kbc *utils.TestContext) {
 		return nil
 	}
 	EventuallyWithOffset(1, getMemcachedPodStatus, time.Minute, time.Second).Should(Succeed())
+
+	By("validating that the status of the custom resource created is updated or not")
+	var status string
+	var customResourceConditions metav1.Condition
+	//nolint:lll
+	getStatus := func() error {
+		status, err = kbc.Kubectl.Get(true, "pods", "-l",
+			fmt.Sprintf("app.kubernetes.io/name=%s", strings.ToLower(kbc.Kind)),
+			"-o", "jsonpath={.items[*].status}",
+		)
+		ExpectWithOffset(2, err).NotTo(HaveOccurred())
+		if err == nil && strings.TrimSpace(status) == "" {
+			return errors.New("empty status, continue")
+		} else if err := goyaml.Unmarshal([]byte(status), &customResourceConditions); err != nil {
+			return errors.New("unable to Unmarshal the status")
+		} else if customResourceConditions.Type != "typeAvailable" || customResourceConditions.Status != metav1.ConditionTrue {
+			return errors.New(`conditions type should be "typeAvailable" and status should be true`)
+		}
+		return nil
+	}
+	Eventually(getStatus, time.Minute, time.Second).Should(Succeed())
 
 	//Testing the finalizer
 	EventuallyWithOffset(1, func() error {
