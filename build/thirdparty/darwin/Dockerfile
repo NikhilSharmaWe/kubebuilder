@@ -57,7 +57,7 @@ WORKDIR /usr/local
 RUN tar -czvf /kubebuilder_${OS}_${ARCH}.tar.gz kubebuilder/
 
 # Copy tarball to final image.
-FROM alpine:3.8
+FROM alpine:3.16.2
 
 # Platform args.
 ARG OS=darwin
