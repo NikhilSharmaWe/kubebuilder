@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/cloudflare/cfssl v1.5.0 // for `kubebuilder alpha config-gen`
 	github.com/gobuffalo/flect v0.3.0
-	github.com/onsi/ginkgo/v2 v2.1.6
-	github.com/onsi/gomega v1.20.2
+	github.com/onsi/ginkgo/v2 v2.3.1
+	github.com/onsi/gomega v1.22.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.9.2
 	github.com/spf13/cobra v1.4.0
