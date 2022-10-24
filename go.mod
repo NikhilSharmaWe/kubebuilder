@@ -5,14 +5,14 @@ go 1.19
 require (
 	github.com/cloudflare/cfssl v1.5.0 // for `kubebuilder alpha config-gen`
 	github.com/gobuffalo/flect v0.3.0
-	github.com/onsi/ginkgo/v2 v2.1.6
-	github.com/onsi/gomega v1.20.2
+	github.com/onsi/ginkgo/v2 v2.4.0
+	github.com/onsi/gomega v1.22.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.9.2
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/text v0.3.7
-	golang.org/x/tools v0.1.12
+	golang.org/x/text v0.4.0
+	golang.org/x/tools v0.2.0
 	k8s.io/apimachinery v0.25.2 // for `kubebuilder alpha config-gen`
 	sigs.k8s.io/controller-runtime v0.13.0 // for `kubebuilder alpha config-gen`
 	sigs.k8s.io/controller-tools v0.10.0 // for `kubebuilder alpha config-gen`
@@ -51,10 +51,10 @@ require (
 	github.com/xlab/treeprint v1.1.0 // indirect
 	github.com/zmap/zcrypto v0.0.0-20200911161511-43ff0ea04f21 // indirect
 	github.com/zmap/zlint/v2 v2.2.1 // indirect
-	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/mod v0.6.0 // indirect
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
