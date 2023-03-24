@@ -31,10 +31,43 @@ type bundle struct {
 	deprecateWarning         string
 }
 
+type BundleOption func(*bundle)
+
+func WithName(name string) BundleOption {
+	return func(opts *bundle) {
+		opts.name = name
+	}
+}
+
+func WithVersion(version Version) BundleOption {
+	return func(opts *bundle) {
+		opts.version = version
+	}
+}
+
+func WithPlugins(plugins ...Plugin) BundleOption {
+	return func(opts *bundle) {
+		opts.plugins = plugins
+	}
+}
+
+func WithDeprecationMessage(msg string) BundleOption {
+	return func(opts *bundle) {
+		opts.deprecateWarning = msg
+	}
+
+}
+
 // NewBundle creates a new Bundle with the provided name and version, and that wraps the provided plugins.
 // The list of supported project versions is computed from the provided plugins.
-func NewBundle(name string, version Version, deprecateWarning string, plugins ...Plugin) (Bundle, error) {
-	supportedProjectVersions := CommonSupportedProjectVersions(plugins...)
+func NewBundle(opts ...BundleOption) (Bundle, error) {
+	bundleOpts := bundle{}
+
+	for _, opts := range opts {
+		opts(&bundleOpts)
+	}
+
+	supportedProjectVersions := CommonSupportedProjectVersions(bundleOpts.plugins...)
 	if len(supportedProjectVersions) == 0 {
 		return nil, fmt.Errorf("in order to bundle plugins, they must all support at least one common project version")
 	}
@@ -42,8 +75,8 @@ func NewBundle(name string, version Version, deprecateWarning string, plugins ..
 	// Plugins may be bundles themselves, so unbundle here
 	// NOTE(Adirio): unbundling here ensures that Bundle.Plugin always returns a flat list of Plugins instead of also
 	//               including Bundles, and therefore we don't have to use a recursive algorithm when resolving.
-	allPlugins := make([]Plugin, 0, len(plugins))
-	for _, plugin := range plugins {
+	allPlugins := make([]Plugin, 0, len(bundleOpts.plugins))
+	for _, plugin := range bundleOpts.plugins {
 		if pluginBundle, isBundle := plugin.(Bundle); isBundle {
 			allPlugins = append(allPlugins, pluginBundle.Plugins()...)
 		} else {
@@ -52,11 +85,11 @@ func NewBundle(name string, version Version, deprecateWarning string, plugins ..
 	}
 
 	return bundle{
-		name:                     name,
-		version:                  version,
+		name:                     bundleOpts.name,
+		version:                  bundleOpts.version,
 		plugins:                  allPlugins,
 		supportedProjectVersions: supportedProjectVersions,
-		deprecateWarning:         deprecateWarning,
+		deprecateWarning:         bundleOpts.deprecateWarning,
 	}, nil
 }
 
