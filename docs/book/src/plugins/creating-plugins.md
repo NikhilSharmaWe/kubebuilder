@@ -58,7 +58,7 @@ In this way, currently, you can [Extend the CLI][extending-cli] and use the `Bun
 
 ```go
   mylanguagev1Bundle, _ := plugin.NewBundle(plugin.WithName(language.DefaultNameQualifier), 
-    plugin.WithVersion(plugin.Version{Number: 1}),
+  		plugin.WithVersion(plugin.Version{Number: 1}),
 		plugin.WithPlugins(kustomizecommonv1.Plugin{}, mylanguagev1.Plugin{}), // extend the common base from Kubebuilder
 		// your plugin language which will do the scaffolds for the specific language on top of the common base
 	)
