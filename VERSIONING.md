@@ -4,7 +4,7 @@ We (mostly) follow the [common Kubebuilder versioning
 guidelines][guidelines], and use the corresponding tooling and PR process
 described there.
 
-For the purposes of the aforementioned guidelines, Kubebuilder counts as
+For the purposes o the aforementioned guidelines, Kubebuilder counts as
 a "CLI project".
 
 [guidelines]: https://sigs.k8s.io/kubebuilder-release-tools/VERSIONING.md
