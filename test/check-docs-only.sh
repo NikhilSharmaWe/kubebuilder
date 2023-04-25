@@ -41,3 +41,5 @@ if ! git diff --name-only $1 | grep -qvE "$(IFS="|"; echo "${DOC_PATTERNS[*]}")"
   echo "true"
   exit 0
 fi
+
+exit 1
