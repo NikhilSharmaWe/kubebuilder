@@ -39,7 +39,7 @@ import (
 
 func main() {
 
-	const deprecateMessageGoV3Bundle = "This version is deprecated." +
+	const deprecateMessageGoV3Bundle = "This  version is deprecated." +
 		"The `go/v3` cannot scaffold projects using kustomize versions v4x+" +
 		" and cannot fully support Kubernetes 1.25+." +
 		"It is recommended to upgrade your project to the latest versions available (go/v4)." +
