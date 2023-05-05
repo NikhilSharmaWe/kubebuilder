@@ -19,6 +19,7 @@
 # in the goreleaser/goreleaser image.
 
 set -e
+set -x
 
 # If running in Github actions: this should be set to "github.base_ref".
 : ${1?"the first argument must be set to a commit-ish reference"}
