@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"log"
+	
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
