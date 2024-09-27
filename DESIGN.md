@@ -3,7 +3,7 @@
 This lays out some of the guiding design principles behind the Kubebuilder
 project and its various components.
 
-## Overarching
+## Overarchin
 
 * **Libraries Over Code Generation**: Generated code is messy to maintain,
   hard for humans to change and understand, and hard to update.  Library
