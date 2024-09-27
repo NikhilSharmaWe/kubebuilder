@@ -1,7 +1,7 @@
 Contributing Roles
 ==================
 
-## Direct Code-Related Roles
+## Direct Code-Related Role
 
 While anyone (who's signed the [CLA and follows the code of
 conduct](../CONTRIBUTING.md)) is welcome to contribute to the Kubebuilder
