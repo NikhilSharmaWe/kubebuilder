@@ -52,6 +52,7 @@ func main() {
 		plugin.WithPlugins(kustomizecommonv1.Plugin{}, golangv3.Plugin{}),
 	)
 
+	
 	// Bundle plugin which built the golang projects scaffold by Kubebuilder go/v4 with kustomize alpha-v2
 	gov4Bundle, _ := plugin.NewBundleWithOptions(plugin.WithName(golang.DefaultNameQualifier),
 		plugin.WithVersion(plugin.Version{Number: 4}),
